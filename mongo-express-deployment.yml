@@ -1,0 +1,39 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  # The name of the Deployment
+  name: mongo-express
+  labels:
+    # Label to identify this app as 'mongo-express'
+    app: mongo-express
+spec:
+# Specifies that amoutn of replicas running
+  replicas: 1
+  selector:
+    matchLabels:
+      # Tells Kubernetes to manage pods with 'app: mongo-express'
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        # The pod will have the 'app: mongo-express' label
+        app: mongo-express
+    spec:
+      containers:
+        # Container name is 'mongo-express'
+      - name: mongo-express
+        # Pulls the latest official Mongo Express image
+        image: mongo-express:latest
+        ports:
+          # Exposes port 8081 inside the container the defult for mongo-express
+        - containerPort: 8081
+        env:
+          # Admin username for MongoDB access
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+          value: "newAdminUser"
+          # Admin password for MongoDB access
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+          value: "newAdminPassword"
+          # Points to the MongoDB server running in the 'mongo' service
+        - name: ME_CONFIG_MONGODB_SERVER
+          value: "mongo"

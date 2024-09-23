@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # The name of the Deployment
+  name: mern-social-media-node
+  labels:
+    # Label to identify this Deployment as 'mern-social-media-node'
+    app: mern-social-media-node
+spec:
+  # Specifies the number of replicas of the pod to run
+  replicas: 1
+  selector:
+    matchLabels:
+      # Selects pods with the label 'app: mern-social-media-node'
+      app: mern-social-media-node
+  template:
+    metadata:
+      labels:
+        # The pod will have the 'app: mern-social-media-node' label
+        app: mern-social-media-node
+    spec:
+      containers:
+        # Container name is 'mern-social-media-node'
+      - name: mern-social-media-node
+        # Pulls the latest image of 'mern-social-media-node'
+        image: mern-social-media-node:latest
+        ports:
+          # Exposes port 5000 inside the container
+        - containerPort: 5000
+        env:
+          # Environment variable to specify the MongoDB connection URL
+        - name: MONGO_URL
+          value: "mongodb://newAdminUser:newAdminPassword@mongo-service:27017/mern"

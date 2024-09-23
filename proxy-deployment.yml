@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # The name of the Deployment
+  name: proxy
+  labels:
+    # A label to identify this app as 'proxy'
+    app: proxy
+spec:
+  # Specifies the number of replicas to run
+  replicas: 1
+  selector:
+    matchLabels:
+      # Selector to match pods with 'app: proxy' label
+      app: proxy
+  template:
+    metadata:
+      labels:
+        # The pod will have the 'app: proxy' label
+        app: proxy
+    spec:
+      containers:
+      - name: proxy
+        # Pulls the latest official Nginx image from Docker Hub
+        image: nginx:latest
+        ports:
+        - containerPort: 80  # Exposes port 80 for HTTP
+        - containerPort: 443  # Exposes port 443 for HTTPS
+        volumeMounts:
+        - name: nginx-config-volume
+          # Mounts the Nginx configuration file into the container
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: ssl-certs
+          # Mounts the directory for SSL certificates
+          mountPath: /etc/ssl/certs
+        - name: ssl-keys
+          # Mounts the directory for SSL private keys
+          mountPath: /etc/ssl/private
+      volumes:
+      - name: nginx-config-volume
+        # Refers to the ConfigMap named 'nginx-config' for Nginx configuration
+        configMap:
+          name: nginx-config
+      - name: ssl-certs
+        # Refers to the Secret named 'tls-certificate' for SSL certificates
+        secret:
+          secretName: tls-certificate
+      - name: ssl-keys
+        # Refers to the Secret named 'tls-private-key' for SSL private key
+        secret:
+          secretName: tls-private-key

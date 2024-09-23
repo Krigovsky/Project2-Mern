@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # The name of the ConfigMap
+  name: nginx-config
+data:
+  # Configuration data for Nginx
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        sendfile on;
+        large_client_header_buffers 4 32k;
+
+        # Upstream block for the backend (API)
+        upstream node {
+            server node:5000;  # 'node' matches the backend service in docker-compose.yml
+        }
+
+        # Upstream block for the frontend
+        upstream react {
+            server react:3000;  # 'react' matches the frontend service in docker-compose.yml
+        }
+
+        # Upstream block for Mongo Express
+        upstream mongo-express {
+            server mongo-express:8081;  # 'mongo-express' matches the service name in docker-compose.yml
+        }
+
+        # HTTP redirect to HTTPS
+        server {
+            listen 80;
+            server_name localhost;
+
+            location / {
+                return 301 https://$host$request_uri;
+            }
+        }
+
+        # HTTPS server block
+        server {
+            listen 443 ssl;
+            server_name localhost;
+
+            ssl_certificate /etc/ssl/certs/localhost.crt;
+            ssl_certificate_key /etc/ssl/private/localhost.key;
+
+            # Proxy requests for the backend API
+            location /api/ {
+                proxy_pass http://node;
+                proxy_redirect off;
+                proxy_http_version 1.1;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection keep-alive;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_buffer_size 128k;
+                proxy_buffers 4 256k;
+                proxy_busy_buffers_size 256k;
+            }
+
+            # Proxy all other requests to the frontend
+            location / {
+                proxy_pass http://react;
+                proxy_redirect off;
+                proxy_http_version 1.1;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection keep-alive;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_buffer_size 128k;
+                proxy_buffers 4 256k;
+                proxy_busy_buffers_size 256k;
+            }
+
+            # Proxy requests for Mongo Express
+            location /mongo-express/ {
+                proxy_pass http://mongo-express/;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header Host $host;
+                proxy_redirect off;
+                proxy_http_version 1.1;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection keep-alive;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_buffer_size 128k;
+                proxy_buffers 4 256k;
+                proxy_busy_buffers_size 256k;
+
+                # Rewrite to ensure URLs stay under /mongo-express/
+                sub_filter_once off;
+                sub_filter 'href="/' 'href="/mongo-express/';
+                sub_filter 'src="/' 'src="/mongo-express/';
+                sub_filter 'action="/' 'action="/mongo-express/';
+                sub_filter 'formaction="/' 'formaction="/mongo-express/';
+                sub_filter 'window.location.href="/' 'window.location.href="/mongo-express/';
+                sub_filter 'window.location.replace("/' 'window.location.replace("/mongo-express/';
+                sub_filter 'window.location.assign("/' 'window.location.assign("/mongo-express/';
+            }
+        }
+    }

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # The name of the Deployment
+  name: mern-social-media-react
+  labels:
+    # Label to identify this app as 'mern-social-media-react'
+    app: mern-social-media-react
+spec:
+  # Number of replicas (pods) to run
+  replicas: 1
+  selector:
+    # Selects pods with the 'app: mern-social-media-react' label
+    matchLabels:
+      app: mern-social-media-react
+  template:
+    metadata:
+      labels:
+        # Pods will have the 'app: mern-social-media-react' label
+        app: mern-social-media-react
+    spec:
+      containers:
+      - name: mern-social-media-react
+        # Docker image used for this container
+        image: mern-social-media-react:latest
+        ports:
+        - containerPort: 3000
+          # Port on the container to expose

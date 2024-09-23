@@ -1,0 +1,26 @@
+# Use an official Node.js runtime as the base image
+FROM node:18
+
+# Set the working directory inside the container to /app/client
+WORKDIR /app/client
+
+# Copy the package.json and package-lock.json for the client app
+COPY client/package*.json ./
+
+# Install dependencies for the client app
+# RUN npm install & npm-force-resoultions to force changes made in package.json
+RUN npm install npm-force-resolutions
+
+
+# Copy the rest of the client application code
+COPY client/ ./
+
+# Expose the port that the frontend will run on 
+# 3000 is the defult for react 
+EXPOSE 3000
+
+# Command to start the frontend server as if its on 
+# a local machine
+CMD ["npm", "start"]
+
+

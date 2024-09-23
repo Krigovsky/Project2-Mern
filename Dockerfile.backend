@@ -1,0 +1,26 @@
+FROM node:18-alpine
+
+# Create and set the working directory
+WORKDIR /home/node/app
+
+# Copy package files first
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Change ownership of all files to the `node` user
+RUN chown -R node:node /home/node/app
+
+# Switch to the `node` user
+USER node
+
+# Expose the port your application runs on
+# the defult port for node servers to be exposed
+EXPOSE 5000
+
+# Start the server as provided on the projects git hub
+CMD [ "node", "server" ]

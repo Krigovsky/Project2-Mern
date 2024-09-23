@@ -1,0 +1,48 @@
+apiVersion: apps/v1  
+# Declares that this resource is a Deployment
+kind: Deployment     
+metadata:
+# The name of the Deployment
+  name: mongo        
+  labels:
+  # A label to identify this app as 'mongo'
+    app: mongo       
+spec:
+# Specifies that amoutn of replicas running
+  replicas: 1        
+  selector:
+    matchLabels:
+      app: mongo     
+  template:          
+    metadata:
+      labels:
+      # The pod will have the 'app: mongo' label, used for selectors
+        app: mongo   
+    spec:
+      containers:   
+      # Container name is 'mongo'
+      - name: mongo  
+       # Pulls the latest official MongoDB image from Docker Hub
+        image: mongo:latest  
+        ports:
+        # Exposes port 27017 inside the container (MongoDB's default port)
+        - containerPort: 27017  
+        # Defines environment variables for the container
+        env:                   
+        - name: MONGO_INITDB_ROOT_USERNAME
+        # Sets the root username for MongoDB
+          value: "newAdminUser"  
+        - name: MONGO_INITDB_ROOT_PASSWORD
+         # Sets the root password for MongoDB
+          value: "newAdminPassword" 
+        volumeMounts:
+        # Links the container to a persistent volume (mongo-data)
+        - name: mongo-data     
+        # Mounts the volume at /data/db (MongoDB's data directory)
+          mountPath: /data/db  
+      volumes:
+      # Defines the volume the pod will use
+      - name: mongo-data       
+        persistentVolumeClaim:
+        # Refers to a PersistentVolumeClaim named 'mongo-pvc' for storage
+          claimName: mongo-pvc  

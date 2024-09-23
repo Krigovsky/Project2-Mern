@@ -1,0 +1,14 @@
+apiVersion: v1  
+kind: PersistentVolumeClaim
+metadata:
+  # The name of the PersistentVolumeClaim
+  name: mongo-pvc
+spec:
+  # Defines the access mode, in this case, ReadWriteOnce (the volume can be mounted as read-write by a single node)
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    # Requests specific storage size
+    requests:
+      # The amount of storage requested (1Gi = 1 Gibibyte)
+      storage: 1Gi

@@ -1,0 +1,131 @@
+version: '3'
+services:
+#the node service 
+  node:
+    #build specificies the file to build the backend image on
+    build: 
+      context: .
+      #looks for a file called Dockerfile.backend
+      dockerfile: Dockerfile.backend
+    #if the image crashes or goes down, restart the image to keep the container alive
+    restart: always
+    ports:
+    #the defult port exposer for node services
+      - "5000:5000"
+    volumes:
+    #where to put data made by this service
+      - .:/app
+    environment:
+    #development since we are not deploying straight for public access
+      - NODE_ENV=development
+    #the url to connect to the mongo service, along with the credientials to read
+    # and write data to
+      - MONGO_URL=mongodb://newAdminUser:newAdminPassword@mongo:27017/mern
+    depends_on:
+    #determins the start up order so will not start until mongo is running/builds mongo first
+      - mongo
+    networks:
+    #connects this service to the backend network making it touch the
+    #mongo service's and proxy
+      - backend
+
+#react service
+  react:
+    build:
+     #build specificies the file to build the backend image on
+      context: .
+      #looks for a file called Dockerfile.frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+    #the defult port exposer for node services
+      - "3000:3000"
+    volumes:
+    #where to put and find data for this service
+      - ./client:/app/client
+    environment:
+    #development since we are not deploying straight for public access
+      - NODE_ENV=development
+    networks:
+    #connects this service to the frontend network making it touch the proxy
+      - frontend
+
+
+  #mongoDB service
+  mongo:
+    #the image to pull from docker hub
+    image: mongo:latest
+    #the defult for mongo db images
+    ports:
+      - "27017:27017"
+    volumes:
+    #the path to persistant data for mongo db to access
+      - mongo-data:/data/db
+    environment:
+    #Enviroment variables for the image to set as the credentials to login
+      MONGO_INITDB_ROOT_USERNAME: newAdminUser
+      MONGO_INITDB_ROOT_PASSWORD: newAdminPassword
+      MONGO_INITDB_DATABASE: admin
+    #connects this image to the backend services
+    # node, mongo-express and the proxy
+    networks:
+      - backend
+
+
+  #mongo-express service
+  mongo-express:
+    #the image to pull from docker hub
+    image: mongo-express
+    #if the image crashes or goes down, restart the image to keep the container alive
+    restart: always
+    #the defult ports 
+    ports:
+      - "8081:8081"
+    #Enviroment variables for the image to set as the credentials to login
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: newAdminUser
+      ME_CONFIG_MONGODB_ADMINPASSWORD: newAdminPassword
+      #the credientials to log into the web gui
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: test
+      ME_CONFIG_MONGODB_SERVER: mongo
+    #determins the start up order so will not start until mongo is running/builds mongo first
+    depends_on:
+      - mongo
+    #connects this image to the backend services
+    # node, mongo and the proxy    
+    networks:
+      - backend
+  #proxy service 
+  proxy:
+    #changeing the name as easier to type out proxy instead of nginx
+    container_name: proxy
+    #the image pulled from docker hub
+    image: nginx
+    #determins the start up order so will not start until mongo is running/builds node and react first
+    depends_on:
+      - react
+      - node
+    #file path to find information needed for the service
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl/localhost.crt:/etc/ssl/certs/localhost.crt
+      - ./ssl/localhost.key:/etc/ssl/private/localhost.key
+    #allowing these ports, which controll http and https access
+    ports:
+      - 80:80
+      - 443:443
+    #the networks this serivce is can communicate with
+    # that beign all other containers
+    networks:
+      - frontend
+      - backend
+
+
+#specficies the networks used above
+networks:
+  backend:
+  frontend:
+
+#specifices the data to allow for persistant data retention
+volumes:
+  mongo-data:
